@@ -13,7 +13,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var mailSentMap map[int]int
+var MailSentMap map[int]int
 var mailSendingMap map[int]int
 var mu = sync.Mutex{}
 var globCfg = Config{}
@@ -37,8 +37,12 @@ func main() {
 	}
 	log.Infof("Database init done")
 	defer db.Close()
-	mailSentMap = make(map[int]int)
+	MailSentMap = make(map[int]int)
 	mailSendingMap = make(map[int]int)
+
+	// Start HTTP Server in seperated goroutine
+	go HTTPServer()
+	log.Infof("Http Server init done")
 
 	for {
 		// Here first traverse the whole list
@@ -49,7 +53,7 @@ func main() {
 			continue
 		}
 		for _, user := range userList {
-			if mailSentMap[user.ID] == 1 || mailSendingMap[user.ID] == 1 {
+			if MailSentMap[user.ID] == 1 || mailSendingMap[user.ID] == 1 {
 				// This user already sent, continue
 				continue
 			}
@@ -75,7 +79,7 @@ func main() {
 				go sendmail(cfg, user.ID)
 			}
 		}
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Hour * 1)
 	}
 }
 
@@ -99,7 +103,7 @@ func sendmail(cfg SendConfig, ID int) {
 	}
 	// Else update the send status
 	mu.Lock()
-	mailSentMap[ID] = 1
+	MailSentMap[ID] = 1
 	mailSendingMap[ID] = 0
 	mu.Unlock()
 	log.Infof("Sent email to user [%d] DONE", ID)
