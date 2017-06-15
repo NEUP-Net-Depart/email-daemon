@@ -1,10 +1,10 @@
 # Configuration file for mailing server
 #
-smtp_user = ""
-smtp_pass = ""
-smtp_host = ""
-smtp_port =
-title = ""
-from_address = ""
+smtp_user = "sample@example.com"
+smtp_pass = "password"
+smtp_host = "smtp.yandex.com"
+smtp_port = 465
+title = "[先锋市场] 未读消息提醒"
+from_address = "sample@example.com"
 
-dsn = ""
+dsn = "user:pass@/dbName?charset=utf8"
