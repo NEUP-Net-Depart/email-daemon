@@ -68,10 +68,10 @@ func main() {
 				cfg.SMTPUser = globCfg.SMTPUser
 				cfg.SMTPPort = globCfg.SMTPPort
 				cfg.To = user.Email
-				cfg.Body = fmt.Sprintf(tpl, user.Username)
+				cfg.Body = fmt.Sprintf(tpl, user.Nickname)
 				cfg.Title = globCfg.Title
 				// multi-goroutine
-				log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Username, user.ID, user.Email)
+				log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Nickname, user.ID, user.Email)
 				go sendmail(cfg, user.ID)
 			}
 		}
