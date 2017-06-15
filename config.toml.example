@@ -1,0 +1,10 @@
+# Configuration file for mailing server
+#
+smtp_user = ""
+smtp_pass = ""
+smtp_host = ""
+smtp_port =
+title = ""
+from_address = ""
+
+dsn = ""
