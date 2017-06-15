@@ -28,11 +28,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	log.Infof("Config init done")
 
 	db, err := gorm.Open("mysql", globCfg.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Infof("Database init done")
 	defer db.Close()
 	mailSentMap = make(map[int]int)
 
@@ -67,6 +69,7 @@ func main() {
 				cfg.Body = fmt.Sprintf(tpl, user.Username)
 				cfg.Title = globCfg.Title
 				// multi-goroutine
+				log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Username, user.ID, user.Email)
 				go sendmail(cfg, user.ID)
 			}
 		}
@@ -92,4 +95,5 @@ func sendmail(cfg SendConfig, ID int) {
 	mu.Lock()
 	mailSentMap[ID] = 1
 	mu.Unlock()
+	log.Infof("Sent email to user [%d] DONE", ID)
 }
