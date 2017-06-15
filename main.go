@@ -94,6 +94,7 @@ func sendmail(cfg SendConfig, ID int) {
 	err := cli.DialAndSend(m)
 	if err != nil {
 		log.Error(err)
+		mailSendingMap[ID] = 0
 		return
 	}
 	// Else update the send status
