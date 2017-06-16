@@ -17,10 +17,11 @@ var MailSentMap map[int]int
 var mailSendingMap map[int]int
 var mu = sync.Mutex{}
 var globCfg = Config{}
+var MailCnt = 0
 
 const tpl = `
 亲爱的同学 %s 您好～ 有人在先锋市场给你发送了私信消息哦，点击下面链接回复吧:
-<h3><a href=https://market.neupioneer.com/message>戳我戳我</a></h3>
+https://market.neupioneer.com/message
 `
 
 func main() {
@@ -75,7 +76,13 @@ func main() {
 				cfg.Body = fmt.Sprintf(tpl, user.Nickname)
 				cfg.Title = globCfg.Title
 				// multi-goroutine
+				if MailCnt > 5 || user.Email == "" {
+					continue
+				}
 				log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Nickname, user.ID, user.Email)
+				mu.Lock()
+				MailCnt++
+				mu.Unlock()
 				go sendmail(cfg, user.ID)
 			}
 		}
@@ -105,6 +112,7 @@ func sendmail(cfg SendConfig, ID int) {
 	mu.Lock()
 	MailSentMap[ID] = 1
 	mailSendingMap[ID] = 0
+	MailCnt--
 	mu.Unlock()
 	log.Infof("Sent email to user [%d] DONE", ID)
 }
