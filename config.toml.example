@@ -8,3 +8,4 @@ title = "[先锋市场] 未读消息提醒"
 from_address = "sample@example.com"
 
 dsn = "user:pass@/dbName?charset=utf8"
+interval = 24 # In hours

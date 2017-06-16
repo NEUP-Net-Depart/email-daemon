@@ -79,7 +79,7 @@ func main() {
 				go sendmail(cfg, user.ID)
 			}
 		}
-		time.Sleep(time.Hour * 1)
+		time.Sleep(time.Hour * globCfg.Interval)
 	}
 }
 
