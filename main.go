@@ -13,7 +13,6 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var mailSendingMap map[int]int
 var mu = sync.Mutex{}
 var globCfg = Config{}
 var MailCnt = 0
@@ -37,7 +36,6 @@ func main() {
 	}
 	log.Infof("Database init done")
 	defer db.Close()
-	mailSendingMap = make(map[int]int)
 
 	// Start HTTP Server in seperated goroutine
 	go HTTPServer()
@@ -93,7 +91,6 @@ func main() {
 func sendmail(cfg SendConfig, user User, db *gorm.DB) {
 	ID := user.ID
 	mu.Lock()
-	mailSendingMap[ID] = 1
 	mu.Unlock()
 	cli := gomail.NewDialer(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass)
 	cli.SSL = true
@@ -105,7 +102,6 @@ func sendmail(cfg SendConfig, user User, db *gorm.DB) {
 	err := cli.DialAndSend(m)
 	if err != nil {
 		log.Error(err)
-		mailSendingMap[ID] = 0
 		return
 	}
 	// Else update the send status
@@ -116,7 +112,6 @@ func sendmail(cfg SendConfig, user User, db *gorm.DB) {
 		return
 	}
 	log.Infof("Updated user [%d] lastSendEmailTime", ID)
-	mailSendingMap[ID] = 0
 	MailCnt--
 	mu.Unlock()
 	log.Infof("Sent email to user [%d] DONE", ID)
