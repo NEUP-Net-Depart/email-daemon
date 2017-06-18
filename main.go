@@ -13,7 +13,6 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var MailSentMap map[int]int
 var mailSendingMap map[int]int
 var mu = sync.Mutex{}
 var globCfg = Config{}
@@ -38,7 +37,6 @@ func main() {
 	}
 	log.Infof("Database init done")
 	defer db.Close()
-	MailSentMap = make(map[int]int)
 	mailSendingMap = make(map[int]int)
 
 	// Start HTTP Server in seperated goroutine
@@ -54,8 +52,9 @@ func main() {
 			continue
 		}
 		for _, user := range userList {
-			if MailSentMap[user.ID] == 1 || mailSendingMap[user.ID] == 1 {
-				// This user already sent, continue
+			if !(user.LastGetNewMessageTime >= user.LastSendEmailTime &&
+				(time.Now().Unix() - int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit) {
+				// This user have already sent
 				continue
 			}
 			lst, err := MessagesByUserID(db, user.ID)
@@ -83,7 +82,7 @@ func main() {
 				mu.Lock()
 				MailCnt++
 				mu.Unlock()
-				go sendmail(cfg, user.ID)
+				go sendmail(cfg, user, db)
 			}
 		}
 		time.Sleep(time.Hour * globCfg.Interval)
@@ -91,7 +90,8 @@ func main() {
 }
 
 // goroutine to run the mail sending fun
-func sendmail(cfg SendConfig, ID int) {
+func sendmail(cfg SendConfig, user User, db *gorm.DB) {
+	ID := user.ID
 	mu.Lock()
 	mailSendingMap[ID] = 1
 	mu.Unlock()
@@ -110,7 +110,12 @@ func sendmail(cfg SendConfig, ID int) {
 	}
 	// Else update the send status
 	mu.Lock()
-	MailSentMap[ID] = 1
+	err = SetUserEmailLock(db, &user)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Infof("Updated user [%d] lastSendEmailTime", ID)
 	mailSendingMap[ID] = 0
 	MailCnt--
 	mu.Unlock()

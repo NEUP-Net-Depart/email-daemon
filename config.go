@@ -11,4 +11,5 @@ type Config struct {
 	Title       string        `toml:"title"`
 	DSN         string        `toml:"dsn"`
 	Interval    time.Duration `toml:"interval"`
+	TimeLimit	int64         `toml:"time_limit"`
 }
