@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type User struct {
@@ -10,6 +11,8 @@ type User struct {
 	Username string
 	Nickname string
 	Email    string
+	LastGetNewMessageTime int
+	LastSendEmailTime int
 }
 
 type Message struct {
@@ -41,6 +44,15 @@ func MessagesByUserID(db *gorm.DB, userID int) (msg []Message, err error) {
 	err = db.Table("message").Where("receiver_id = ?", userID).Where("is_read = ?", false).Scan(&msg).Error
 	if err != nil {
 		err = errors.Wrap(err, "MessagesByUserID")
+		return
+	}
+	return
+}
+
+func SetUserEmailLock(db *gorm.DB, user *User) (err error) {
+	err = db.Model(user).Where("id = ?", user.ID).Update("last_send_email_time", int(time.Now().Unix())).Error
+	if err != nil {
+		err = errors.Wrap(err, "SetUserEmailLock")
 		return
 	}
 	return
