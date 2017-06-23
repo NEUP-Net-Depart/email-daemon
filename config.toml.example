@@ -10,3 +10,5 @@ from_address = "sample@example.com"
 dsn = "user:pass@/dbName?charset=utf8"
 interval = 24 # In hours
 time_limit = 30 # In seconds
+
+amqp_config = "amqp://guest:guest@localhost:5672/"
