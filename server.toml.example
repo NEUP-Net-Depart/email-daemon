@@ -1,0 +1,17 @@
+# Configuration file for mailing server
+#
+[servers]
+
+    [servers.foo]
+    smtp_user = "foo@example"
+    smtp_pass = "foo"
+    smtp_host = "foo.example"
+    smtp_port = 465
+    from_address = "foo@example"
+
+    [servers.stub]
+    smtp_user = "stub@example"
+    smtp_pass = "stub"
+    smtp_host = "stub.example"
+    smtp_port = 465
+    from_address = "stub@example"

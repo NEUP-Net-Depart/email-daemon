@@ -7,12 +7,12 @@ import (
 )
 
 type User struct {
-	ID       int
-	Username string
-	Nickname string
-	Email    string
+	ID                    int
+	Username              string
+	Nickname              string
+	Email                 string
 	LastGetNewMessageTime int
-	LastSendEmailTime int
+	LastSendEmailTime     int
 }
 
 type Message struct {

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/NEUP-Net-Depart/email-daemon/config"
+	"github.com/NEUP-Net-Depart/email-daemon/server"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -14,7 +16,7 @@ import (
 )
 
 var mu = sync.Mutex{}
-var globCfg = Config{}
+var globCfg = config.Config{}
 var MailCnt = 0
 
 const tpl = `
@@ -38,7 +40,7 @@ func main() {
 	defer db.Close()
 
 	// Start HTTP Server in seperated goroutine
-	go HTTPServer()
+	go server.HTTPServer()
 	log.Infof("Http Server init done")
 
 	for {
@@ -51,7 +53,7 @@ func main() {
 		}
 		for _, user := range userList {
 			if !(user.LastGetNewMessageTime >= user.LastSendEmailTime &&
-				(time.Now().Unix() - int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit) {
+				(time.Now().Unix()-int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit) {
 				// This user have already sent
 				continue
 			}

@@ -1,3 +1,4 @@
 config.toml
+server.toml
 email-daemon
 .idea/
