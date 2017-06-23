@@ -26,10 +26,11 @@ https://market.neupioneer.com/message
 
 func main() {
 	// First init config
-	_, err := toml.DecodeFile("config.toml", &globCfg)
+	_, err := toml.DecodeFile("config.toml", &config.GlobCfg)
 	if err != nil {
 		panic(err)
 	}
+	globCfg = config.GlobCfg
 	log.Infof("Config init done")
 
 	db, err := gorm.Open("mysql", globCfg.DSN)
@@ -40,8 +41,12 @@ func main() {
 	defer db.Close()
 
 	// Start HTTP Server in seperated goroutine
+	log.Infof("Initialize http server")
+	log.Infof("Initialize rpc server")
+	log.Infof("Initialize worker")
 	go server.HTTPServer()
-	log.Infof("Http Server init done")
+	go server.ServeRPC()
+	go server.Worker()
 
 	for {
 		// Here first traverse the whole list
