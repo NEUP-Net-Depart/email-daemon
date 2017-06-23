@@ -3,7 +3,6 @@ package server
 import (
 	"net/rpc"
 	"testing"
-	"time"
 
 	"github.com/NEUP-Net-Depart/email-daemon/config"
 )
@@ -13,7 +12,6 @@ func TestServeRPC(t *testing.T) {
 }
 
 func TestRPCSendMail(t *testing.T) {
-	time.Sleep(time.Second * 5)
 	var reply int
 	var args config.MailSettings
 	cli, err := rpc.DialHTTP("tcp", "127.0.0.1:65525")
