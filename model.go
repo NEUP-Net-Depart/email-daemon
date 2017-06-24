@@ -22,11 +22,8 @@ type Message struct {
 
 type SendConfig struct {
 	FromName string
+	SendID   string
 	To       string
-	SMTPHost string
-	SMTPPort int
-	SMTPUser string
-	SMTPPass string
 	Body     string
 	Title    string
 }

@@ -16,7 +16,7 @@ import (
 )
 
 var mu = sync.Mutex{}
-var globCfg = config.Config{}
+var globCfg = config.MessageConfig{}
 var MailCnt = 0
 
 const tpl = `
@@ -30,7 +30,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	globCfg = config.GlobCfg
+	_, err = toml.DecodeFile("config.toml", &config.MessageCfg)
+	if err != nil {
+		panic(err)
+	}
+	globCfg = config.MessageCfg
 	log.Infof("Config init done")
 
 	db, err := gorm.Open("mysql", globCfg.DSN)
@@ -71,11 +75,8 @@ func main() {
 			if len(lst) != 0 {
 				// we need to send mail
 				cfg := SendConfig{}
-				cfg.FromName = "先锋市场"
-				cfg.SMTPHost = globCfg.SMTPHost
-				cfg.SMTPPass = globCfg.SMTPPass
-				cfg.SMTPUser = globCfg.SMTPUser
-				cfg.SMTPPort = globCfg.SMTPPort
+				cfg.FromName = globCfg.FromName
+				cfg.SendID = globCfg.SendID
 				cfg.To = user.Email
 				cfg.Body = fmt.Sprintf(tpl, user.Nickname)
 				cfg.Title = globCfg.Title
@@ -105,7 +106,7 @@ func sendmail(cfg SendConfig, user User, db *gorm.DB) {
 		return
 	}
 	args.Body = cfg.Body
-	args.SendID = "notify"
+	args.SendID = cfg.SendID
 	args.To = cfg.To
 	args.Subject = cfg.Title
 	args.FromName = cfg.FromName

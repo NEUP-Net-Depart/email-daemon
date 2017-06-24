@@ -1,14 +1,14 @@
 # Configuration file for mailing server
 #
-smtp_user = "sample@example.com"
-smtp_pass = "password"
-smtp_host = "smtp.yandex.com"
-smtp_port = 465
+
+# Global amqp config
+amqp_config = "amqp://guest:guest@localhost:5672/"
+
+# Config for message service
 title = "[先锋市场] 未读消息提醒"
 from_name = "先锋市场"
+send_id = "notify"
 
 dsn = "user:pass@/dbName?charset=utf8"
 interval = 24 # In hours
 time_limit = 30 # In seconds
-
-amqp_config = "amqp://guest:guest@localhost:5672/"

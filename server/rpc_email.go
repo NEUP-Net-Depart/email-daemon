@@ -14,7 +14,7 @@ import (
 )
 
 type ServerList struct {
-	Servers map[string]config.Config
+	Servers map[string]config.SMTPConfig
 }
 
 var sl ServerList
