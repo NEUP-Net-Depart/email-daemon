@@ -2,8 +2,8 @@ package server
 
 import (
 	"net"
-	"net/http"
 	"net/rpc"
+	"net/rpc/jsonrpc"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -72,7 +72,13 @@ func ServeRPC() {
 	rpc.HandleHTTP()
 	l, err := net.Listen("tcp", ":65525")
 	if err != nil {
-		log.Fatalf("Cannot start RPC service: %s", err)
+		log.Fatalf("ServeRPC: Cannot start RPC service: %s", err)
 	}
-	http.Serve(l, nil)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Errorf("ServeRPC: %s", err)
+		}
+		go jsonrpc.ServeConn(conn)
+	}
 }

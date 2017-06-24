@@ -1,7 +1,7 @@
 package server
 
 import (
-	"net/rpc"
+	"net/rpc/jsonrpc"
 	"testing"
 
 	"github.com/NEUP-Net-Depart/email-daemon/config"
@@ -14,7 +14,7 @@ func TestServeRPC(t *testing.T) {
 func TestRPCSendMail(t *testing.T) {
 	var reply int
 	var args config.MailSettings
-	cli, err := rpc.DialHTTP("tcp", "127.0.0.1:65525")
+	cli, err := jsonrpc.Dial("tcp", "127.0.0.1:65525")
 	if err != nil {
 		t.Error(err)
 		t.Fail()
