@@ -12,7 +12,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/pkg/errors"
-	"gopkg.in/gomail.v2"
+	"net/rpc/jsonrpc"
 )
 
 var mu = sync.Mutex{}
@@ -71,7 +71,7 @@ func main() {
 			if len(lst) != 0 {
 				// we need to send mail
 				cfg := SendConfig{}
-				cfg.From = globCfg.FromAddress
+				cfg.FromName = "先锋市场"
 				cfg.SMTPHost = globCfg.SMTPHost
 				cfg.SMTPPass = globCfg.SMTPPass
 				cfg.SMTPUser = globCfg.SMTPUser
@@ -97,20 +97,24 @@ func main() {
 // goroutine to run the mail sending fun
 func sendmail(cfg SendConfig, user User, db *gorm.DB) {
 	ID := user.ID
-	mu.Lock()
-	mu.Unlock()
-	cli := gomail.NewDialer(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass)
-	cli.SSL = true
-	m := gomail.NewMessage()
-	m.SetHeader("From", cfg.From)
-	m.SetHeader("To", cfg.To)
-	m.SetHeader("Subject", cfg.Title)
-	m.SetBody("text/html", cfg.Body)
-	err := cli.DialAndSend(m)
+	var reply int
+	var args config.MailSettings
+	cli, err := jsonrpc.Dial("tcp", "127.0.0.1:65525")
 	if err != nil {
 		log.Error(err)
 		return
 	}
+	args.Body = cfg.Body
+	args.SendID = "notify"
+	args.To = cfg.To
+	args.Subject = cfg.Title
+	args.FromName = cfg.FromName
+	err = cli.Call("Daemon.SendMail", &args, &reply)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Info(reply)
 	// Else update the send status
 	mu.Lock()
 	err = SetUserEmailLock(db, &user)

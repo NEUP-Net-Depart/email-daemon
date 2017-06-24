@@ -5,7 +5,7 @@ smtp_pass = "password"
 smtp_host = "smtp.yandex.com"
 smtp_port = 465
 title = "[先锋市场] 未读消息提醒"
-from_address = "sample@example.com"
+from_name = "先锋市场"
 
 dsn = "user:pass@/dbName?charset=utf8"
 interval = 24 # In hours

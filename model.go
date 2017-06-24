@@ -21,7 +21,7 @@ type Message struct {
 }
 
 type SendConfig struct {
-	From     string
+	FromName string
 	To       string
 	SMTPHost string
 	SMTPPort int
