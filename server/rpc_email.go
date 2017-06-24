@@ -70,7 +70,7 @@ func ServeRPC() {
 	ms := new(Daemon)
 	rpc.Register(ms)
 	rpc.HandleHTTP()
-	l, err := net.Listen("tcp", ":65525")
+	l, err := net.Listen("tcp", "127.0.0.1:65525")
 	if err != nil {
 		log.Fatalf("ServeRPC: Cannot start RPC service: %s", err)
 	}
