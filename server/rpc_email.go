@@ -35,6 +35,7 @@ func (d *Daemon) SendMail(ms *config.MailSettings, reply *int) (err error) {
 	j.Body = ms.Body
 	j.To = ms.To
 	j.From = server.FromAddress
+	j.FromName = ms.FromName
 	j.Title = ms.Subject
 	j.TimeStamp = time.Now()
 	j.SMTPHost = server.SMTPHost

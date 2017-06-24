@@ -18,8 +18,9 @@ type Config struct {
 }
 
 type MailSettings struct {
-	To      string
-	SendID  string
-	Subject string
-	Body    string
+	To		    string
+	FromName    string
+	SendID      string
+	Subject     string
+	Body        string
 }

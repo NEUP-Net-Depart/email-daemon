@@ -11,6 +11,7 @@ import (
 // Job is the structure to send email
 type Job struct {
 	From      string    `json:"from"`
+	FromName  string    `json:"from_name"`
 	To        string    `json:"to"`
 	SMTPUser  string    `json:"smtp_user"`
 	SMTPPass  string    `json:"smtp_pass"`
@@ -28,8 +29,8 @@ func (j Job) Send() (err error) {
 	cli := gomail.NewDialer(j.SMTPHost, j.SMTPPort, j.SMTPUser, j.SMTPPass)
 	cli.SSL = true
 	m := gomail.NewMessage()
-	m.SetHeader("From", j.From)
 	m.SetHeader("To", j.To)
+	m.SetAddressHeader("From", j.From, j.FromName)
 	m.SetHeader("Subject", j.Title)
 	m.SetBody("text/html", j.Body)
 Retry:

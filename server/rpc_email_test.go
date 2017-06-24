@@ -23,6 +23,7 @@ func TestRPCSendMail(t *testing.T) {
 	args.SendID = "notify"
 	args.To = "zhangjianqiu_133@yeah.net"
 	args.Subject = "邮件测试哦OwO"
+	args.FromName = "我"
 	err = cli.Call("Daemon.SendMail", &args, &reply)
 	if err != nil {
 		t.Error(err)
