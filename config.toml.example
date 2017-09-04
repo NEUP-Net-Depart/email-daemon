@@ -3,12 +3,13 @@
 
 # Global amqp config
 amqp_config = "amqp://guest:guest@localhost:5672/"
+wechat_msg_key = ""
 
 # Config for message service
 title = "[先锋市场] 未读消息提醒"
 from_name = "先锋市场"
 send_id = "notify"
 
-dsn = "user:pass@/dbName?charset=utf8"
-interval = 24 # In hours
+dsn = "user:pass@/dbName?charset=utf8&parseTime=true"
+interval = 24 # In seconds
 time_limit = 30 # In seconds

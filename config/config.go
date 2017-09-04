@@ -6,7 +6,8 @@ var GlobCfg = Config{}
 var MessageCfg = MessageConfig{}
 
 type Config struct {
-	AMQPConfig  string        `toml:"amqp_config"`
+	AMQPConfig  	string        `toml:"amqp_config"`
+	WechatMsgKey	string		  `toml:"wechat_msg_key"`
 }
 
 type SMTPConfig struct {
