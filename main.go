@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -14,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"net/rpc/jsonrpc"
 	"net/http"
-//	"io/ioutil"
 	"bytes"
 	"encoding/json"
 	"crypto/md5"
@@ -23,9 +21,7 @@ import (
 	"io/ioutil"
 )
 
-var mu = sync.Mutex{}
 var globCfg = config.MessageConfig{}
-var MailCnt = 0
 
 const tpl = `
 亲爱的同学 %s 您好～ 有人在先锋市场给你发送了私信消息哦，点击下面链接回复吧:
@@ -70,41 +66,51 @@ func main() {
 		}
 		for _, user := range userList {
 			// This user has left message page, ready to receive message.
-			if (time.Now().Unix()-int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit {
-				// He wants a new E-mail (as well as a new text)
-				if user.LastGetNewMessageTime >= user.LastSendEmailTime {
-					lst, err := MessagesByUserID(db, user.ID)
-					if err == nil {
-						if len(lst) != 0 {
-							// we need to send mail
-							cfg := SendConfig{}
-							cfg.FromName = globCfg.FromName
-							cfg.SendID = globCfg.SendID
-							cfg.To = user.Email
-							cfg.Body = fmt.Sprintf(tpl, user.Nickname)
-							cfg.Title = globCfg.Title
-							// multi-goroutine
-							if !(MailCnt > 5 || user.Email == "") {
-								log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Nickname, user.ID, user.Email)
-								mu.Lock()
-								MailCnt++
-								mu.Unlock()
-								go sendMail(cfg, user, db)
-							}
+			// He has new unknown messages
+			if (time.Now().Unix()-int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit &&
+				(user.LastGetNewMessageTime >= user.LastSendEmailTime ||
+					int(time.Now().Unix()) - user.LastSendEmailTime > 24 * 60 * 60 ) {
+
+				log.Infof("User [%d] read her message and left message page", user.ID)
+
+				// Send Email
+				lst, err := MessagesByUserID(db, user.ID)
+				if err == nil {
+					if len(lst) != 0 {
+						// Set notified state
+						err = SetUserEmailLock(db, &user)
+						if err != nil {
+							log.Error(err)
+							return
 						}
-					} else {
-						err = errors.Wrap(err, "main routine")
-						log.Error(err)
+						log.Infof("Updated user [%d] lastSendEmailTime", user.ID)
+						// we need to send mail
+						cfg := SendConfig{}
+						cfg.FromName = globCfg.FromName
+						cfg.SendID = globCfg.SendID
+						cfg.To = user.Email
+						cfg.Body = fmt.Sprintf(tpl, user.Nickname)
+						cfg.Title = globCfg.Title
+						// multi-goroutine
+						if !(user.Email == "") {
+							log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Nickname, user.ID, user.Email)
+							go sendMail(cfg, user, db)
+						}
 					}
+				} else {
+					err = errors.Wrap(err, "main routine")
+					log.Error(err)
 				}
-				// He wants a new Wechat
+
+
+				// Send wechat
 				if user.WechatOpenID != "" {
 					lst, err := WeChatMessagesByUserID(db, user.ID)
 					if err == nil {
 						if len(lst) != 0 {
-							// We need to send wechat
 							for _, msg := range lst {
-								sendWechat(msg, user.WechatOpenID, db)
+								sendWechat(msg, user.WechatOpenID, db, len(lst))
+								break
 							}
 						}
 					}
@@ -138,20 +144,10 @@ func sendMail(cfg SendConfig, user User, db *gorm.DB) {
 		return
 	}
 	log.Info(reply)
-	// Else update the send status
-	mu.Lock()
-	err = SetUserEmailLock(db, &user)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Infof("Updated user [%d] lastSendEmailTime", ID)
-	MailCnt--
-	mu.Unlock()
 	log.Infof("Sent email to user [%d] DONE", ID)
 }
 
-func sendWechat(msg Message, openID string, db *gorm.DB) {
+func sendWechat(msg Message, openID string, db *gorm.DB, num int) {
 
 	log.Infof("Sending wx message [%d] from user [%d] to user [%d] DONE", msg.ID, msg.SenderID, msg.ReceiverID)
 
@@ -164,13 +160,25 @@ func sendWechat(msg Message, openID string, db *gorm.DB) {
 
 	t := time.Now().Unix()
 
-	datas := [5]map[string]string {
-		{ "name": "first", "value": "【先锋市场】新消息提醒" },
-		{ "name": "keyword1", "value": sender_name },
-		{ "name": "keyword2", "value": msg.Content },
-		{ "name": "keyword3", "value": msg.CreatedAt.Format("2006-01-02 15:04:05") },
-		{ "name": "remark", "value": "您收到一条系统消息，请及时查看。" },
+	var datas [5]map[string]string
+	if num == 1 {
+		datas = [5]map[string]string{
+			{"name": "first", "value": "【先锋市场】新消息提醒" },
+			{"name": "keyword1", "value": sender_name },
+			{"name": "keyword2", "value": msg.Content },
+			{"name": "keyword3", "value": msg.CreatedAt.Format("2006-01-02 15:04:05") },
+			{"name": "remark", "value": "您收到一条新消息，请及时查看。" },
+		}
+	} else {
+		datas = [5]map[string]string{
+			{"name": "first", "value": "【先锋市场】新消息提醒" },
+			{"name": "keyword1", "value": sender_name + " 等" },
+			{"name": "keyword2", "value": msg.Content },
+			{"name": "keyword3", "value": msg.CreatedAt.Format("2006-01-02 15:04:05") },
+			{"name": "remark", "value": "您收到 " + strconv.Itoa(num) +" 条新消息，请及时查看。" },
+		}
 	}
+	log.Info(datas)
 
 	data := map[string]interface{} {
 		"toUser": openID,
