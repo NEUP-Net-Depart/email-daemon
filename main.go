@@ -29,6 +29,7 @@ https://market.neupioneer.com/message
 `
 
 func main() {
+
 	// First init config
 	_, err := toml.DecodeFile("config.toml", &config.GlobCfg)
 	if err != nil {
@@ -40,6 +41,10 @@ func main() {
 	}
 	globCfg = config.MessageCfg
 	log.Infof("Config init done")
+
+	if config.GlobCfg.Debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	db, err := gorm.Open("mysql", globCfg.DSN)
 	if err != nil {
@@ -71,19 +76,27 @@ func main() {
 				(user.LastGetNewMessageTime >= user.LastSendEmailTime ||
 					int(time.Now().Unix()) - user.LastSendEmailTime > 24 * 60 * 60 ) {
 
-				log.Infof("User [%d] read her message and left message page", user.ID)
+				var s = "User [%d] has read his message and left message page, "
+				if user.LastGetNewMessageTime >= user.LastSendEmailTime {
+					s += "he has never received a notification since last visit message page, "
+				} else {
+					s += "he received a notification last time one day ago, "
+				}
+				log.Debugf(s + "is willing to receive a notification.", user.ID)
 
-				// Send Email
+				// Send Email & Text
 				lst, err := MessagesByUserID(db, user.ID)
 				if err == nil {
 					if len(lst) != 0 {
 						// Set notified state
+						// all notifications will be blocked until his visited message page or a day passed
 						err = SetUserEmailLock(db, &user)
 						if err != nil {
 							log.Error(err)
 							return
 						}
 						log.Infof("Updated user [%d] lastSendEmailTime", user.ID)
+
 						// we need to send mail
 						cfg := SendConfig{}
 						cfg.FromName = globCfg.FromName
@@ -96,6 +109,8 @@ func main() {
 							log.Infof("Preparing to send email to user %s[%d] e-mail: %s", user.Nickname, user.ID, user.Email)
 							go sendMail(cfg, user, db)
 						}
+
+						// we need to send text
 					}
 				} else {
 					err = errors.Wrap(err, "main routine")
@@ -116,6 +131,14 @@ func main() {
 					}
 				}
 
+			} else {
+				var s = "User [%d] "
+				if !(time.Now().Unix()-int64(user.LastGetNewMessageTime) > globCfg.TimeLimit) {
+					s += "is likely to be on message page, "
+				} else {
+					s += "received a notification in one day, "
+				}
+				log.Debugf(s + "is NOT willing to receive a notification.", user.ID)
 			}
 
 		}
