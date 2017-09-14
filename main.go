@@ -172,7 +172,7 @@ func sendMail(cfg SendConfig, user User, db *gorm.DB) {
 
 func sendWechat(msg Message, openID string, db *gorm.DB, num int) {
 
-	log.Infof("Sending wx message [%d] from user [%d] to user [%d] DONE", msg.ID, msg.SenderID, msg.ReceiverID)
+	log.Infof("Sending wx message [%d] from user [%d] to user [%d]", msg.ID, msg.SenderID, msg.ReceiverID)
 
 	var sender_name string
 	if msg.SenderID == 0 {
@@ -237,9 +237,17 @@ func sendWechat(msg Message, openID string, db *gorm.DB, num int) {
 
 	client := &http.Client{}
 	req_buf := bytes.NewBuffer(xdata_json)
-	request, _ := http.NewRequest("POST", "https://api.xms.rmbz.net/open/msg/send", req_buf)
+	request, err := http.NewRequest("POST", "https://api.xms.rmbz.net/open/msg/send", req_buf)
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	request.Header.Set("Content-type", "application/json")
-	response, _ := client.Do(request)
+	response, err := client.Do(request)
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	if response.StatusCode == 200 {
 		body, _ := ioutil.ReadAll(response.Body)
 		log.Info(string(body))
@@ -247,6 +255,6 @@ func sendWechat(msg Message, openID string, db *gorm.DB, num int) {
 		if err != nil {
 			log.Error(err)
 		}
-		log.Infof("Sent wx message [%d] to wechat [%s]", msg.ID, openID)
+		log.Infof("Sent wx message [%d] to wechat [%s] DONE", msg.ID, openID)
 	}
 }
