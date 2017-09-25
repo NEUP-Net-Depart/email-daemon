@@ -11,8 +11,10 @@ type User struct {
 	Username              string
 	Nickname              string
 	Email                 string
+	Tel					  string
 	LastGetNewMessageTime int
 	LastSendEmailTime     int
+	LastSendWxTime        int
 	WechatOpenID		  string
 }
 
@@ -34,6 +36,11 @@ type SendConfig struct {
 	To       string
 	Body     string
 	Title    string
+}
+
+type TextConfig struct {
+	To       string
+	Body     string
 }
 
 func (Message) TableName() string {
@@ -71,6 +78,15 @@ func SetUserEmailLock(db *gorm.DB, user *User) (err error) {
 	err = db.Model(user).Where("id = ?", user.ID).Update("last_send_email_time", int(time.Now().Unix())).Error
 	if err != nil {
 		err = errors.Wrap(err, "SetUserEmailLock")
+		return
+	}
+	return
+}
+
+func SetUserWxLock(db *gorm.DB, user *User) (err error) {
+	err = db.Model(user).Where("id = ?", user.ID).Update("last_send_wx_time", int(time.Now().Unix())).Error
+	if err != nil {
+		err = errors.Wrap(err, "SetUserWxLock")
 		return
 	}
 	return

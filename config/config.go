@@ -8,6 +8,7 @@ var MessageCfg = MessageConfig{}
 type Config struct {
 	AMQPConfig  	string        `toml:"amqp_config"`
 	WechatMsgKey	string		  `toml:"wechat_msg_key"`
+	TextApiKey		string        `toml:"text_api_key"`
 	Debug			bool		  `toml:"debug"`
 }
 
