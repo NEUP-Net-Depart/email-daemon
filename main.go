@@ -78,7 +78,7 @@ func main() {
 			// He has new unknown messages
 			if (time.Now().Unix()-int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit &&
 				(user.LastGetNewMessageTime >= user.LastSendEmailTime ||
-					int(time.Now().Unix())-user.LastSendEmailTime > 24*60*60) {
+					int(time.Now().Unix())-user.LastSendEmailTime > int(globCfg.EmailLockTime)*60) {
 
 				var s = "User [%d] has read his message and left message page, "
 				if user.LastGetNewMessageTime >= user.LastSendEmailTime {
@@ -142,7 +142,7 @@ func main() {
 			// He has new unknown messages
 			if (time.Now().Unix()-int64(user.LastGetNewMessageTime)) > globCfg.TimeLimit &&
 				(user.LastGetNewMessageTime >= user.LastSendWxTime ||
-					int(time.Now().Unix())-user.LastSendWxTime > 10*60) {
+					int(time.Now().Unix())-user.LastSendWxTime > int(globCfg.WxLockTime)*60) {
 
 				var s = "User [%d] has read his message and left message page, "
 				if user.LastGetNewMessageTime >= user.LastSendWxTime {
@@ -164,7 +164,7 @@ func main() {
 								return
 							}
 							log.Infof("Updated user [%d] lastSendWxTime", user.ID)
-							go sendWechat(lst[0], user.WechatOpenID, db, len(lst))
+							go sendWechat(lst, user.WechatOpenID, db, len(lst))
 						}
 					}
 				}
@@ -230,9 +230,16 @@ func sendText(cfg TextConfig, user User, db *gorm.DB) {
 	}
 }
 
-func sendWechat(msg Message, openID string, db *gorm.DB, num int) {
+func sendWechat(msgs []Message, openID string, db *gorm.DB, num int) {
 
-	log.Infof("Sending wx message [%d] from user [%d] to user [%d]", msg.ID, msg.SenderID, msg.ReceiverID)
+	var msg = msgs[0]
+	var last_msg = msgs[len(msgs)-1]
+	if len(msgs) == 1 {
+		log.Infof("Sending wx message [%d] from user [%d] to user [%d]", msg.ID, msg.SenderID, msg.ReceiverID)
+	} else {
+		log.Infof("Sending wx message [%d-%d] from user [%d] to user [%d]", msg.ID, last_msg.ID,
+			msg.SenderID, msg.ReceiverID)
+	}
 
 	var sender_name string
 	if msg.SenderID == 0 {
@@ -311,10 +318,17 @@ func sendWechat(msg Message, openID string, db *gorm.DB, num int) {
 	if response.StatusCode == 200 {
 		body, _ := ioutil.ReadAll(response.Body)
 		log.Info(string(body))
-		err = SetMsgWechatSent(db, &msg)
-		if err != nil {
-			log.Error(err)
+		for _, msg := range msgs {
+			err = SetMsgWechatSent(db, &msg)
+			if err != nil {
+				log.Error(err)
+			}
 		}
-		log.Infof("Sent wx message [%d] to wechat [%s] DONE", msg.ID, openID)
+
+		if len(msgs) == 1 {
+			log.Infof("Sent wx message [%d] to wechat [%s] DONE", msg.ID, openID)
+		} else {
+			log.Infof("Sent wx message [%d-%d] to wechat [%s] DONE", msg.ID, last_msg.ID, openID)
+		}
 	}
 }
