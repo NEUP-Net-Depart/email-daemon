@@ -11,21 +11,21 @@ type User struct {
 	Username              string
 	Nickname              string
 	Email                 string
-	Tel					  string
+	Tel                   string
 	LastGetNewMessageTime int
 	LastSendEmailTime     int
 	LastSendWxTime        int
-	WechatOpenID		  string
+	WechatOpenID          string
 }
 
 type Message struct {
-	ID		   int
+	ID         int
 	ReceiverID int
 	IsRead     bool
-	WxSent	   bool
+	WxSent     bool
 	Content    string
 	SenderID   int
-	Sender	   User `gorm:"ForeignKey:SenderID"`
+	Sender     User `gorm:"ForeignKey:SenderID"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
@@ -39,8 +39,8 @@ type SendConfig struct {
 }
 
 type TextConfig struct {
-	To       string
-	Body     string
+	To   string
+	Body string
 }
 
 func (Message) TableName() string {
