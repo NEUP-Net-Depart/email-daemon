@@ -15,5 +15,5 @@ send_id = "notify"
 dsn = "user:pass@/dbName?charset=utf8&parseTime=true"
 interval = 24 # In seconds
 time_limit = 30 # In seconds
-email_lock_time = 1440 # In Minutes
+email_lock_time = 43200 # In Minutes, 43200 is a month
 wx_lock_time = 1 # In Minutes
