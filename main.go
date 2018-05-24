@@ -248,7 +248,7 @@ func sendWechat(msgs []Message, openID string, db *gorm.DB, num int) {
 		sender_name = msg.Sender.Nickname
 	}
 
-	t := time.Now().Unix()
+	t := time.Now().Unix() // 请务必确认服务器时间是准确的
 
 	var datas [5]map[string]string
 	if num == 1 {
